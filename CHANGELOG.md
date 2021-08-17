@@ -16,3 +16,7 @@ Major update.
 
 - null safety
 - updated dependencies
+
+# 2021-03-30 1.2.1
+
+- Add support for custom ping intervals

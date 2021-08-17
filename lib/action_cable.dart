@@ -17,6 +17,7 @@ class ActionCable {
   late Timer _timer;
   late IOWebSocketChannel _socketChannel;
   late StreamSubscription _listener;
+  late Duration pingInterval;
   _OnConnectedFunction? onConnected;
   _OnCannotConnectFunction? onCannotConnect;
   _OnConnectionLostFunction? onConnectionLost;
@@ -31,15 +32,16 @@ class ActionCable {
     this.onConnected,
     this.onConnectionLost,
     this.onCannotConnect,
+    this.pingInterval = const Duration(seconds: 3),
   }) {
     // rails gets a ping every 3 seconds
     _socketChannel = IOWebSocketChannel.connect(url,
-        headers: headers, pingInterval: Duration(seconds: 3));
+        headers: headers, pingInterval: pingInterval);
     _listener = _socketChannel.stream.listen(_onData, onError: (_) {
       this.disconnect(); // close a socket and the timer
       if (this.onCannotConnect != null) this.onCannotConnect!();
     });
-    _timer = Timer.periodic(const Duration(seconds: 3), healthCheck);
+    _timer = Timer.periodic(pingInterval, healthCheck);
   }
 
   void disconnect() {
@@ -48,13 +50,13 @@ class ActionCable {
     _listener.cancel();
   }
 
-  // check if there is no ping for 3 seconds and signal a [onConnectionLost] if
-  // there is no ping for more than 6 seconds
+  // check if there is no ping for pingInterval and signal a [onConnectionLost] if
+  // there is no ping for more than 2 pingIntervals
   void healthCheck(_) {
     if (_lastPing == null) {
       return;
     }
-    if (DateTime.now().difference(_lastPing!) > Duration(seconds: 6)) {
+    if (DateTime.now().difference(_lastPing!) > pingInterval * 2) {
       this.disconnect();
       if (this.onConnectionLost != null) this.onConnectionLost!();
     }
