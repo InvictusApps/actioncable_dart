@@ -114,36 +114,40 @@ class ActionCable {
   }
 
   void _handleProtocolMessage(Map payload) {
-    switch (payload['type']) {
-      case 'ping':
-        // rails sends epoch as seconds not miliseconds
-        _lastPing =
-            DateTime.fromMillisecondsSinceEpoch(payload['message'] * 1000);
-        break;
-      case 'welcome':
-        if (onConnected != null) {
-          onConnected!();
-        }
-        break;
-      case 'disconnect':
-        final channelId = parseChannelId(payload['identifier']);
-        final onDisconnected = _onChannelDisconnectedCallbacks[channelId];
-        if (onDisconnected != null) {
-          onDisconnected();
-        }
-        break;
-      case 'confirm_subscription':
-        final channelId = parseChannelId(payload['identifier']);
-        final onSubscribed = _onChannelSubscribedCallbacks[channelId];
-        if (onSubscribed != null) {
-          onSubscribed();
-        }
-        break;
-      case 'reject_subscription':
-        // throw 'Unimplemented';
-        break;
-      default:
-        throw 'InvalidMessage';
+    try {
+      switch (payload['type']) {
+        case 'ping':
+          // rails sends epoch as seconds not miliseconds
+          _lastPing =
+              DateTime.fromMillisecondsSinceEpoch(payload['message'] * 1000);
+          break;
+        case 'welcome':
+          if (onConnected != null) {
+            onConnected!();
+          }
+          break;
+        case 'disconnect':
+          final channelId = parseChannelId(payload['identifier']);
+          final onDisconnected = _onChannelDisconnectedCallbacks[channelId];
+          if (onDisconnected != null) {
+            onDisconnected();
+          }
+          break;
+        case 'confirm_subscription':
+          final channelId = parseChannelId(payload['identifier']);
+          final onSubscribed = _onChannelSubscribedCallbacks[channelId];
+          if (onSubscribed != null) {
+            onSubscribed();
+          }
+          break;
+        case 'reject_subscription':
+          // throw 'Unimplemented';
+          break;
+        default:
+          throw 'InvalidMessage';
+      }
+    } catch (e) {
+      print("[ACTION_CABLE] ERROR handling protocol message");
     }
   }
 
